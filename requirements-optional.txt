@@ -1,0 +1,2 @@
+# Optional PDF text extraction only. Core app, DOCX import/export and matching use no third-party packages.
+pypdf>=5,<7

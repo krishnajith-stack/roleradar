@@ -1,0 +1,10 @@
+data/
+site/
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.*
+*.sqlite3
+*.sqlite3-*
+*backup*.json

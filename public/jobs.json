@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "status": "not_configured",
+  "generated_at": null,
+  "warning": "Connect the provider secret and run Refresh job feed. No sample vacancies are presented as live jobs.",
+  "queries": [],
+  "jobs": []
+}

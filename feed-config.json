@@ -1,0 +1,8 @@
+{
+  "date_posted": "month",
+  "max_pages_per_query": 1,
+  "queries": [
+    {"query": "cybersecurity", "country": "in", "location": "", "category": "all"},
+    {"query": "cybersecurity", "country": "ae", "location": "", "category": "all"}
+  ]
+}

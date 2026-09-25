@@ -1,5 +1,6 @@
 """Build an allowlisted static site. Never copy local data or credentials."""
 import ast
+import hashlib
 from pathlib import Path
 import shutil
 
@@ -45,6 +46,14 @@ def build():
     (OUT / 'app.py').write_text(browser_core((ROOT / 'app.py').read_text()), encoding='utf-8')
     html = (OUT / 'index.html').read_text()
     html = html.replace('<!-- online-runtime -->', '<script src="./online.js" defer></script>')
+    # Content-addressed assets prevent an existing browser/CDN cache from mixing
+    # a newly deployed page with scripts or styles from the previous release.
+    for name in ('style.css', 'app.js', 'online.js'):
+        source = OUT / name
+        digest = hashlib.sha256(source.read_bytes()).hexdigest()[:12]
+        versioned = f'{source.stem}.{digest}{source.suffix}'
+        shutil.copyfile(source, OUT / versioned)
+        html = html.replace(f'./{name}', f'./{versioned}')
     (OUT / 'index.html').write_text(html, encoding='utf-8')
     feed = ROOT / 'public' / 'jobs.json'
     shutil.copyfile(feed, OUT / 'jobs.json')

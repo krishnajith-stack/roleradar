@@ -1,19 +1,30 @@
 # RoleRadar - online and local job-search workspace
 
-Version 2.1 - updated 25 September 2026
+Version 2.2 - updated 25 September 2026
 
 **Open the application: https://krishnajith-stack.github.io/roleradar/**
 
 1. Open **My CV** and import or paste your CV, then save it.
 2. Use the LinkedIn, Naukri or Naukrigulf shortcuts to find jobs.
-3. Choose **Paste a job description**, add the full JD and application link,
-   and save it to calculate your match score.
+3. Choose **Add a job**, paste a public posting URL, and click **Fetch & add job**.
+   RoleRadar extracts available job details, saves the role as **Saved**, and
+   opens its description for review. You can also enter the details manually.
 4. Track stages and notes in **Applications** and prepare drafts in **Resume studio**.
 
-Board shortcuts work without an API key. They open external websites; listings
-are added by pasting, not automatically imported. LinkedIn carries the role and
+Board shortcuts and individual URL imports work without the feed API key.
+Shortcuts open external websites; use **Fetch & add job** to import a selected posting.
+LinkedIn carries the role and
 location fields into its search. Set remaining filters on the destination board.
 Automatic LinkedIn/Naukri feed import still requires provider configuration below.
+
+URL import uses Jina AI Reader to read a public page. The submitted URL is sent to
+that service, while your CV, notes and saved workspace remain in your browser.
+No credentials or API key are sent to the reader. Supported pages expose
+JobPosting structured data or recognisable job-description elements. Login walls,
+access restrictions, expired postings, ambiguous multi-job pages and rate limits
+produce an error with manual entry available; a failed import does not save a job.
+The importer does not apply to an employer or mark a role as Applied. Review
+extracted details; information absent from the source is not invented.
 
 ## New online edition
 

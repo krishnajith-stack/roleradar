@@ -38,7 +38,7 @@ def build():
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir()
-    for name in ('index.html', 'style.css', 'app.js', 'favicon.svg'):
+    for name in ('index.html', 'style.css', 'app.js', 'job-import.js', 'favicon.svg'):
         shutil.copyfile(ROOT / 'static' / name, OUT / name)
     for name in ('online.js', 'worker.js'):
         shutil.copyfile(ROOT / 'web' / name, OUT / name)
@@ -48,7 +48,7 @@ def build():
     html = html.replace('<!-- online-runtime -->', '<script src="./online.js" defer></script>')
     # Content-addressed assets prevent an existing browser/CDN cache from mixing
     # a newly deployed page with scripts or styles from the previous release.
-    for name in ('style.css', 'app.js', 'online.js'):
+    for name in ('style.css', 'app.js', 'online.js', 'job-import.js'):
         source = OUT / name
         digest = hashlib.sha256(source.read_bytes()).hexdigest()[:12]
         versioned = f'{source.stem}.{digest}{source.suffix}'

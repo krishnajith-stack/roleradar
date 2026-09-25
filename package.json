@@ -6,7 +6,7 @@
     "dev": "python3 app.py --preview --port 4173 --no-browser",
     "build": "python3 scripts/build_site.py",
     "test": "python3 -m unittest discover -s tests -v",
-    "test:web": "node tests/test_runtime.mjs"
+    "test:web": "node tests/test_import.mjs && node tests/test_runtime.mjs"
   },
   "devDependencies": {
     "pyodide": "0.29.4",

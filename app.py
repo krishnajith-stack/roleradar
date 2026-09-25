@@ -799,7 +799,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', mime); self.send_header('Content-Length', str(len(data)))
         self.send_header('Cache-Control', 'no-store'); self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('X-Frame-Options', 'DENY'); self.send_header('Referrer-Policy', 'no-referrer')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://r.jina.ai; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'")
         if filename: self.send_header('Content-Disposition', 'attachment; filename="' + re.sub(r'[^a-zA-Z0-9_.-]', '_', filename) + '"')
         self.end_headers()
         try: self.wfile.write(data)
@@ -821,6 +821,7 @@ class Handler(BaseHTTPRequestHandler):
                     job['match'] = matching(kv_get('profile', {}), job); return self.response(job)
                 return self.response({'error': 'Not found'}, 404)
             assets = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+                      '/job-import.js': ('job-import.js', 'text/javascript; charset=utf-8'),
                       '/style.css': ('style.css', 'text/css; charset=utf-8'), '/favicon.svg': ('favicon.svg', 'image/svg+xml')}
             if path not in assets: return self.response('Not found', 404, 'text/plain')
             name, mime = assets[path]; return self.response((ROOT / 'static' / name).read_bytes(), mime=mime)

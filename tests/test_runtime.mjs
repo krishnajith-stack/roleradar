@@ -66,7 +66,7 @@ window.scrollTo = () => {};
 window.confirm = () => true;
 window.CSS = {escape: value => value};
 window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
-window.HTMLDialogElement.prototype.close = function () { this.open = false; };
+window.HTMLDialogElement.prototype.close = function () { this.open = false; this.dispatchEvent(new window.Event('close')); };
 const source = await readFile(new URL('site/worker.js', root), 'utf8');
 // Exercise the unconfigured state regardless of the deployed provider snapshot.
 const initialFeed = {version: 1, status: 'not_configured', generated_at: null, jobs: []};
@@ -97,6 +97,7 @@ window.Worker = class {
   postMessage(data) { this.context.onmessage({data}); }
 };
 window.eval(await readFile(new URL('site/online.js', root), 'utf8'));
+window.eval(await readFile(new URL('site/job-import.js', root), 'utf8'));
 window.eval(await readFile(new URL('site/app.js', root), 'utf8'));
 for (let attempt = 0; attempt < 100 && window.document.getElementById('content').hidden; attempt++) {
   await new Promise(resolve => setTimeout(resolve, 50));
@@ -147,6 +148,46 @@ assert.equal((await window.roleRadarOnline.api('/api/jobs/' + onlineId)).status,
 assert.ok((await window.roleRadarOnline.api('/api/jobs/' + onlineId)).notes.some(note => note.text === 'Persisted via IndexedDB'));
 await assert.rejects(window.roleRadarOnline.api('/api/search', {source: 'boards'}), /not connected/);
 console.log('PASS: actual worker transport, IndexedDB snapshots, failed-write rollback and unconfigured feed');
+const imported = {'@type':'JobPosting',title:'Security Test Engineer',hiringOrganization:{name:'Import Test Employer'},description:'Coordinate enterprise security investigations and vulnerability remediation with Qualys, ServiceNow and infrastructure teams. Track critical findings through remediation and validation.',jobLocation:{address:{addressLocality:'Dubai',addressCountry:'AE'}}};
+const importHtml = '<script type="application/ld+json">'+JSON.stringify(imported)+'</script>';
+const readerResponse = () => ({ok:true,headers:new Map(),text:async()=>JSON.stringify({data:{httpStatus:200,html:importHtml}})});
+window.fetch = async () => readerResponse();
+const waitFor = async predicate => {for(let i=0;i<200 && !predicate();i++) await new Promise(resolve=>setTimeout(resolve,25)); assert.ok(predicate());};
+window.document.getElementById('addJob').click();
+window.document.getElementById('jobUrl').value='https://careers.example.com/jobs/import-test';
+window.document.getElementById('importJobLink').click();
+await waitFor(()=>window.document.getElementById('navJobs').textContent==='5');
+await waitFor(()=>window.document.getElementById('jobDialog').open);
+let importState = await window.roleRadarOnline.api('/api/state');
+const savedImport = importState.jobs.find(j=>j.company==='Import Test Employer');
+assert.equal(savedImport.status,'Saved'); assert.equal(savedImport.country,'ae');
+assert.ok(window.document.getElementById('jobDetails').textContent.includes('Security Test Engineer'));
+window.document.getElementById('jobDialog').close();
+window.document.getElementById('addJob').click();
+window.document.getElementById('jobUrl').value='https://careers.example.com/jobs/import-test';
+window.document.getElementById('importJobLink').click();
+await waitFor(()=>window.document.getElementById('jobDialog').open);
+assert.equal((await window.roleRadarOnline.api('/api/state')).jobs.length,5);
+window.document.getElementById('jobDialog').close();
+window.document.getElementById('addJob').click();
+window.document.getElementById('jobUrl').value='https://careers.example.com/jobs/blocked';
+window.fetch=async()=>({ok:false,status:403});
+window.document.getElementById('importJobLink').click();
+await waitFor(()=>window.document.getElementById('jobImportNotice').className.includes('error'));
+assert.equal((await window.roleRadarOnline.api('/api/state')).jobs.length,5);
+assert.equal(window.document.getElementById('jobUrl').value,'https://careers.example.com/jobs/blocked');
+assert.equal(window.document.getElementById('jobTitle').disabled,false);
+let resolveLate;
+window.fetch=()=>new Promise(resolve=>{resolveLate=resolve;});
+window.document.getElementById('importJobLink').click();
+window.document.getElementById('addDialog').close();
+window.document.getElementById('addJob').click();
+window.document.getElementById('jobTitle').value='New manual entry';
+resolveLate(readerResponse());
+await new Promise(resolve=>setTimeout(resolve,100));
+assert.equal(window.document.getElementById('jobTitle').value,'New manual entry');
+assert.equal((await window.roleRadarOnline.api('/api/state')).jobs.length,5);
+console.log('PASS: paste-link import saves and opens job, duplicates are retained, failures preserve manual input, cancelled imports cannot save');
 window.close();
 }
 

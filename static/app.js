@@ -8,6 +8,7 @@ const state = {profile:{}, jobs:[], settings:{}, countries:{}, categories:{}, st
 let token = '', currentView = 'discover', selectedIds = null, shortlistOnly = false, nextCursor = '', lastSearch = null;
 let detailJob = null, detailTab = 'match', toastTimer, draftDirty = false, profileDirty = false, activeDraftJob = '', uploading = false;
 let resumeMethod = '', booted = false;
+let jobImportController = null, jobFormEpoch = 0, importedJobMeta = null;
 
 async function api(path, data, binary = false) {
   if (window.roleRadarOnline) return window.roleRadarOnline.api(path, data, binary);
@@ -173,10 +174,62 @@ async function importCV(file) {
 }
 
 function openJobForm(job = null) {
+  jobImportController?.abort(); jobImportController = null; jobFormEpoch++; importedJobMeta = null;
+  setJobImportBusy(false); notice('jobImportNotice', '');
   $('jobForm').reset(); $('editJobId').value = job?.id || ''; $('jobFormTitle').textContent = job ? 'Edit job details' : 'Add a job';
+  $('importJobLink').textContent = job ? 'Fetch details' : 'Fetch & add job';
   const mapping = {jobTitle:'title',jobCompany:'company',jobCountry:'country',jobLocation:'location',jobCategory:'category',jobMode:'work_mode',jobUrl:'url',jobDescription:'description'};
   Object.entries(mapping).forEach(([id,key])=>{$(id).value = job?.[key] || (id==='jobCategory'?'all':id==='jobMode'?'Unspecified':'');});
   $('addDialog').showModal();
+}
+
+function setJobImportBusy(active) {
+  $('jobForm').querySelectorAll('input, select, textarea, button[type="submit"]').forEach(node => {node.disabled = active;});
+  $('importJobLink').disabled = active;
+  $('jobForm').setAttribute('aria-busy', String(active));
+}
+
+async function importJobLink() {
+  if (jobImportController) return;
+  const url = window.roleRadarJobImport.publicUrl($('jobUrl').value);
+  const controller = new AbortController(), epoch = jobFormEpoch;
+  jobImportController = controller;
+  const timer = setTimeout(() => controller.abort(), 45000);
+  setJobImportBusy(true);
+  notice('jobImportNotice', 'Fetching the job title, company, location and description…');
+  try {
+    const job = await window.roleRadarJobImport.fetchJob(url, state.countries, controller.signal);
+    if (controller.signal.aborted || epoch !== jobFormEpoch || !$('addDialog').open) return;
+    clearTimeout(timer);
+    const editing = Boolean($('editJobId').value);
+    const fields = {jobTitle:'title', jobCompany:'company', jobCountry:'country', jobLocation:'location', jobMode:'work_mode', jobDescription:'description'};
+    // Keep any fields already entered by the user. The fetched URL is the import identity.
+    for (const [id, key] of Object.entries(fields)) {
+      if (!$(id).value.trim() || (id === 'jobMode' && $(id).value === 'Unspecified')) $(id).value = job[key] || '';
+    }
+    $('jobUrl').value = job.url;
+    importedJobMeta = {source: job.source, posted: job.posted, salary: job.salary};
+    if (editing) {
+      notice('jobImportNotice', 'Available details filled in. Your existing text was kept. Review and save your changes.');
+      return;
+    }
+    const data = {...job, title:$('jobTitle').value, company:$('jobCompany').value,
+      country:$('jobCountry').value, location:$('jobLocation').value,
+      description:$('jobDescription').value, work_mode:$('jobMode').value,
+      category:$('jobCategory').value, status:'Saved'};
+    notice('jobImportNotice', 'Saving the job and calculating its match…');
+    const result = await api('/api/jobs', data);
+    $('addDialog').close(); selectedIds = null;
+    await refresh();
+    toast(result.added ? 'Job imported and saved. Review the fetched details.' : 'This job is already saved. Its existing notes and stage were kept.');
+    await openJob(result.job.id, 'jd');
+  } catch (error) {
+    if (epoch !== jobFormEpoch || !$('addDialog').open) return;
+    notice('jobImportNotice', controller.signal.aborted ? 'Fetching timed out. Try again or paste the job description below.' : error.message, 'error');
+  } finally {
+    clearTimeout(timer);
+    if (jobImportController === controller) {jobImportController = null; setJobImportBusy(false);}
+  }
 }
 
 async function openJob(id, tab = 'match') {
@@ -281,6 +334,14 @@ function bind() {
   document.addEventListener('click',guarded(globalClick));
   document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
   $('addJob').onclick=()=>openJobForm();$('trackerAdd').onclick=()=>openJobForm();
+  $('importJobLink').onclick=guarded(importJobLink);
+  $('jobUrl').addEventListener('input', () => {importedJobMeta = null; notice('jobImportNotice', '');});
+  $('jobUrl').addEventListener('keydown', guarded(async event => {
+    if (event.key === 'Enter') {event.preventDefault(); await importJobLink();}
+  }));
+  $('addDialog').addEventListener('close', () => {
+    jobImportController?.abort(); jobImportController = null; jobFormEpoch++; setJobImportBusy(false);
+  });
   $('source').onchange=sourceNote;$('sort').onchange=renderJobs;$('minScore').onchange=renderJobs;$('trackerFilter').onchange=renderTracker;
   $('searchForm').onsubmit=e=>{e.preventDefault();performSearch();};$('loadMore').onclick=()=>performSearch(true);$('resetResults').onclick=resetResults;
   $('scoreGuide').onclick=()=>$('guideDialog').showModal();
@@ -292,7 +353,8 @@ function bind() {
   $('cvFile').onchange=guarded(e=>importCV(e.target.files[0]));
   $('jobForm').onsubmit=guarded(async(e)=>{
     e.preventDefault();const id=$('editJobId').value;
-    const data={title:$('jobTitle').value,company:$('jobCompany').value,country:$('jobCountry').value,location:$('jobLocation').value,category:$('jobCategory').value,work_mode:$('jobMode').value,url:$('jobUrl').value,description:$('jobDescription').value};
+    if (jobImportController) return;
+    const data={...(importedJobMeta || {}),title:$('jobTitle').value,company:$('jobCompany').value,country:$('jobCountry').value,location:$('jobLocation').value,category:$('jobCategory').value,work_mode:$('jobMode').value,url:$('jobUrl').value,description:$('jobDescription').value};
     await busy(e.submitter,'Saving…',async()=>{const result=await api(id?'/api/jobs/'+id:'/api/jobs',data);$('addDialog').close();selectedIds=null;await refresh();toast(id?'Job updated.':result.added?'Job saved and matched.':'This job was already saved. Open the existing record to edit it.');if(id)await openJob(id,'jd');});
   });
   $('resumeJob').onchange=()=>setDraftJob($('resumeJob').value);

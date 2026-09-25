@@ -68,7 +68,10 @@ GitHub Actions/Pages and the provider are subject to their account limits.
 ## 4. Move your existing workspace
 
 You can use RoleRadar before connecting a provider: import your CV, open a job
-board using the shortcuts, and paste a full job description and apply link.
+board using the shortcuts, then paste a posting URL into **Add a job** and select
+**Fetch & add job**. Individual URL import uses Jina AI Reader without the feed
+key; only the public posting URL is shared. If the page cannot be read, paste the
+full job description manually. Import does not submit an employer application.
 Matching, tracking, notes and evidence-based resume exports work without a key.
 The online edition does not include generative AI rewriting.
 

@@ -25,3 +25,8 @@ input,select{font-size:.875rem}
 .board-search > p { line-height: 1.6; }
 .board-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
 .board-actions a { text-decoration: none; }
+.job-link-import { padding: 16px; background: var(--teal-light); border-radius: 10px; margin: 16px 0; }
+.job-link-row { display: flex; gap: 8px; margin-top: 8px; }
+.job-link-row input { min-width: 0; flex: 1; }
+.job-link-row .button { flex-shrink: 0; }
+@media(max-width: 620px) { .job-link-row { flex-direction: column; } }

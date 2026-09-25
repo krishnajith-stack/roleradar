@@ -19,3 +19,9 @@ input,select{font-size:.875rem}
 *{letter-spacing:0!important}.feed-connection{min-width:0}.feed-connection code{overflow-wrap:anywhere}.feed-connection li{margin:8px 0}.feed-connection ol{padding-left:22px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{body{background:#fff;color:#000}.app-shell,dialog,.toast,.skip-link{display:none!important}#printArea{display:block!important;white-space:pre-wrap;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.4;margin:0;overflow-wrap:break-word}@page{size:A4;margin:16mm}}
+/* Online job-board handoff: useful even before a feed is connected. */
+.board-search { margin-top: 16px; }
+.board-search h2 { margin-top: 0; }
+.board-search > p { line-height: 1.6; }
+.board-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.board-actions a { text-decoration: none; }

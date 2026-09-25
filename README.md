@@ -1,6 +1,19 @@
 # RoleRadar - online and local job-search workspace
 
-Version 2.0 - updated 23 September 2026
+Version 2.1 - updated 25 September 2026
+
+**Open the application: https://krishnajith-stack.github.io/roleradar/**
+
+1. Open **My CV** and import or paste your CV, then save it.
+2. Use the LinkedIn, Naukri or Naukrigulf shortcuts to find jobs.
+3. Choose **Paste a job description**, add the full JD and application link,
+   and save it to calculate your match score.
+4. Track stages and notes in **Applications** and prepare drafts in **Resume studio**.
+
+Board shortcuts work without an API key. They open external websites; listings
+are added by pasting, not automatically imported. LinkedIn carries the role and
+location fields into its search. Set remaining filters on the destination board.
+Automatic LinkedIn/Naukri feed import still requires provider configuration below.
 
 ## New online edition
 
@@ -13,7 +26,7 @@ between devices. Export a backup before clearing site data or changing devices.
 The new LinkedIn, Naukri and combined source options validate original apply-link
 hosts. The online edition searches a **scheduled public feed snapshot**, not a
 fresh provider request for each keyword search. The default is two cybersecurity
-queries (India and UAE), once a week. Broader coverage or more frequent refreshes
+queries (India and UAE), once a week and when publishing. Broader coverage or more frequent refreshes
 consume additional provider requests. Naukri availability depends on indexing;
 an empty result does not mean there are no vacancies on Naukri.
 

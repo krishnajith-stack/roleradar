@@ -43,6 +43,11 @@ Do not assume the app is live until that deployment succeeds.
 4. Run **Refresh job feed** under Actions. A successful refresh commits the public
    snapshot and redeploys the site. Then reload RoleRadar.
 
+Publishing also attempts a feed refresh when a provider key is configured. A
+provider error is reported in Actions and the existing repository snapshot is
+used so that a feed outage does not block application updates. The scheduled
+workflow commits successful snapshots back to the repository.
+
 The schedule is Mondays at 03:17 UTC, two API requests per run by default. GitHub
 may delay scheduled runs or disable inactive public-repository schedules. Manual
 runs are available. A missing key retains the previous snapshot and does not
@@ -61,6 +66,11 @@ No paid hosting service or provider subscription is purchased by this project.
 GitHub Actions/Pages and the provider are subject to their account limits.
 
 ## 4. Move your existing workspace
+
+You can use RoleRadar before connecting a provider: import your CV, open a job
+board using the shortcuts, and paste a full job description and apply link.
+Matching, tracking, notes and evidence-based resume exports work without a key.
+The online edition does not include generative AI rewriting.
 
 In the old desktop app, use Connections & data > Export backup. In the online
 app, use Import backup. Review your CV and saved jobs. The import merges new jobs

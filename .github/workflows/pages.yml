@@ -25,6 +25,11 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -v
+      - name: Refresh configured job feed
+        continue-on-error: true
+        env:
+          OPENWEBNINJA_API_KEY: ${{ secrets.OPENWEBNINJA_API_KEY }}
+        run: python scripts/refresh_feed.py
       - run: python scripts/build_site.py
       - uses: actions/setup-node@v4
         with:

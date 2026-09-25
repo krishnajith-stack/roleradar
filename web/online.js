@@ -43,17 +43,44 @@ window.roleRadarOnline = (() => {
   function sourceNote() {
     const saved = $('source').value === 'saved';
     $('datePosted').disabled = saved;
+    $('searchButton').disabled = !saved && !feed?.generated_at;
+    $('searchButton').textContent = saved ? 'Search saved jobs' : 'Search published feed';
     $('sourceNote').textContent = saved
       ? 'Search private records in this browser. Posted-date selection is ignored.'
       : feed?.generated_at
         ? `Published feed: ${new Date(feed.generated_at).toLocaleString()}. Filters search this snapshot. Coverage depends on configured searches and provider indexing.`
-        : 'Automatic feed not connected yet. Configure the GitHub Actions secret in Connections & data. You can still add jobs and import your previous backup.';
+        : 'Automatic feed not connected yet. Use the job-board links below, then paste a job description to match it against your CV. Connect the automatic feed in Connections & data.';
     if ($('feedStatus')) $('feedStatus').textContent = feed?.generated_at
       ? `${feed.jobs.length} indexed listings. Updated ${new Date(feed.generated_at).toLocaleString()}.${Date.now() - Date.parse(feed.generated_at) > 172800000 ? ' Stale: check the latest Actions run.' : ''}`
       : 'Awaiting provider setup. No live listings have been fetched.';
     if ($('feedCoverage')) $('feedCoverage').textContent = feed?.queries?.length
       ? 'Configured searches: ' + feed.queries.map(q => `${q.query} (${q.country.toUpperCase()})`).join('; ')
       : 'Default coverage: cybersecurity roles in India and the UAE. Edit feed-config.json to change the scheduled searches.';
+    updateBoardLinks();
+  }
+
+  function updateBoardLinks() {
+    if (!$('linkedinSearch')) return;
+    const url = new URL('https://www.linkedin.com/jobs/search/');
+    const query = $('query').value.trim();
+    const country = $('country').value ? $('country').selectedOptions[0]?.textContent : '';
+    const location = [$('location').value.trim(), country].filter(Boolean).join(', ');
+    if (query) url.searchParams.set('keywords', query);
+    if (location) url.searchParams.set('location', location);
+    $('linkedinSearch').href = url.href;
+  }
+
+  function addBoardLinks() {
+    const section = document.createElement('section');
+    section.className = 'panel board-search';
+    section.setAttribute('aria-labelledby', 'boardSearchTitle');
+    section.innerHTML = '<h2 id="boardSearchTitle">Find jobs on your favourite boards</h2><p>Open a board, find a role, then bring its full description and apply link back here for a match score and application tracking.</p><div class="board-actions"><a id="linkedinSearch" class="button secondary" href="https://www.linkedin.com/jobs/search/" target="_blank" rel="noopener noreferrer">Search LinkedIn ↗</a><a class="button secondary" href="https://www.naukri.com/" target="_blank" rel="noopener noreferrer">Open Naukri ↗</a><a class="button secondary" href="https://www.naukrigulf.com/" target="_blank" rel="noopener noreferrer">Open Naukrigulf ↗</a><button type="button" class="button primary" id="pasteBoardJob">＋ Paste a job description</button></div><p class="subtle">LinkedIn uses the role and location above. Set other filters on the job board. These links open external websites; they do not import listings or send your CV.</p>';
+    $('searchForm').after(section);
+    $('pasteBoardJob').addEventListener('click', () => $('addJob').click());
+    for (const id of ['query', 'location', 'country']) {
+      $(id).addEventListener('input', updateBoardLinks);
+      $(id).addEventListener('change', updateBoardLinks);
+    }
   }
 
   async function api(path, data, binary = false) {
@@ -68,6 +95,7 @@ window.roleRadarOnline = (() => {
   }
 
   async function ready() {
+    addBoardLinks();
     document.querySelector('meta[name="description"]').content = 'Private CV matching and tracking, with a scheduled LinkedIn and Naukri job feed.';
     document.querySelector('.local-pill').textContent = 'BROWSER PRIVATE';
     document.querySelector('.local-label div').innerHTML = 'Online workspace<small>Private data in this browser.</small>';
